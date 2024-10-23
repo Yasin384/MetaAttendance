@@ -14,7 +14,20 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import os
 import dj_database_url
+# Путь к директории проекта
+BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Настройки базы данных
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB', 'railway'),  # Имя базы данных
+        'USER': os.environ.get('PGUSER', 'postgres'),      # Пользователь
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'EgQNxysNxJGGWRfaJBlXJqJkNXSnwoKO'),  # Пароль
+        'HOST': os.environ.get('PGHOST', 'postgres.railway.internal'),  # Хост
+        'PORT': os.environ.get('PGPORT', '5432'),           # Порт
+    }
+}
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -29,7 +42,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 
 
@@ -104,11 +117,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://postgres:EgQNxysNxJGGWRfaJBlXJqJkNXSnwoKO@autorack.proxy.rlwy.net:54798/railway'
-    )
-}
+
 
 
 
