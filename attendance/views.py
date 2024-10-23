@@ -231,9 +231,6 @@ def home(request):
 # Admin dashboard view
 
 
-
-
-
 @login_required
 def admin_dashboard(request):
     if not request.user.is_staff:
@@ -243,35 +240,27 @@ def admin_dashboard(request):
     total_teachers = Teacher.objects.count()
     total_faculties = Faculty.objects.count()
 
-    today = timezone.now().date()
-
-    students_present_today = Attendance.objects.filter(
-        date=today, status='present', user__student__isnull=False
-    ).count()
-
-    teachers_present_today = Attendance.objects.filter(
-        date=today, status='present', user__teacher__isnull=False
-    ).count()
-
-    students_absent_today = total_students - students_present_today
-    teachers_absent_today = total_teachers - teachers_present_today
-
-    faculties = Faculty.objects.annotate(
-        present_today=Count('students__user__attendance', filter=Q(students__user__attendance__date=today, students__user__attendance__status='present')),
-        total_students=Count('students')
+    teachers = Teacher.objects.all().annotate(
+        total_days=Count('user__attendance', distinct=True),
+        present_days=Count('user__attendance', filter=Q(user__attendance__status='present')),
+        absent_days=Count('user__attendance', filter=Q(user__attendance__status='absent')),
     )
+
+    faculty_attendance = Faculty.objects.annotate(
+        present_days=Count('students__user__attendance', filter=Q(students__user__attendance__status='present'))
+    ).order_by('-present_days')
 
     context = {
         'total_students': total_students,
         'total_teachers': total_teachers,
         'total_faculties': total_faculties,
-        'students_present_today': students_present_today,
-        'teachers_present_today': teachers_present_today,
-        'students_absent_today': students_absent_today,
-        'teachers_absent_today': teachers_absent_today,
-        'faculties': faculties,
+        'teachers': teachers,
+        'faculties': Faculty.objects.all(),
+        'faculty_attendance': faculty_attendance,
     }
     return render(request, 'attendance/admin_dashboard.html', context)
+
+
 
 # Profile management view
 @login_required
