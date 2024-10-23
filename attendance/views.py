@@ -231,53 +231,47 @@ def home(request):
 # Admin dashboard view
 
 
+
+
+
+@login_required
 def admin_dashboard(request):
-    # Проверка, является ли пользователь администратором
     if not request.user.is_staff:
         return redirect('home')
 
-    # Текущая дата
+    total_students = Student.objects.count()
+    total_teachers = Teacher.objects.count()
+    total_faculties = Faculty.objects.count()
+
     today = timezone.now().date()
 
-    # Подсчет присутствующих и отсутствующих студентов
-    students_present_today = Student.objects.filter(
-        user__attendance__status='present', 
-        user__attendance__date=today
-    ).count()
-    
-    students_absent_today = Student.objects.filter(
-        user__attendance__status='absent', 
-        user__attendance__date=today
+    students_present_today = Attendance.objects.filter(
+        date=today, status='present', user__student__isnull=False
     ).count()
 
-    # Подсчет присутствующих и отсутствующих учителей
-    teachers_present_today = Teacher.objects.filter(
-        user__attendance__status='present', 
-        user__attendance__date=today
-    ).count()
-    
-    teachers_absent_today = Teacher.objects.filter(
-        user__attendance__status='absent', 
-        user__attendance__date=today
+    teachers_present_today = Attendance.objects.filter(
+        date=today, status='present', user__teacher__isnull=False
     ).count()
 
-    # Информация о факультетах: количество студентов и присутствующих студентов
+    students_absent_today = total_students - students_present_today
+    teachers_absent_today = total_teachers - teachers_present_today
+
     faculties = Faculty.objects.annotate(
-        total_students=Count('students'),
-        present_today=Count('students__user__attendance', filter=Q(students__user__attendance__status='present', students__user__attendance__date=today))
+        present_today=Count('students__user__attendance', filter=Q(students__user__attendance__date=today, students__user__attendance__status='present')),
+        total_students=Count('students')
     )
 
     context = {
+        'total_students': total_students,
+        'total_teachers': total_teachers,
+        'total_faculties': total_faculties,
         'students_present_today': students_present_today,
-        'students_absent_today': students_absent_today,
         'teachers_present_today': teachers_present_today,
+        'students_absent_today': students_absent_today,
         'teachers_absent_today': teachers_absent_today,
         'faculties': faculties,
     }
-
     return render(request, 'attendance/admin_dashboard.html', context)
-
-
 
 # Profile management view
 @login_required
